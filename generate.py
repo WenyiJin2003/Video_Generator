@@ -1,8 +1,13 @@
 import base64
 from pathlib import Path
+import time
 from typing import Dict, List
 
 import requests
+OUTPUT_DIR = Path('./output')
+from google import genai
+
+
 
 
 def generate_character_references(
@@ -29,7 +34,7 @@ def generate_character_references(
         image_data = generate_image(image_api_key, prompt)
 
         # Save image
-        image_path = self.output_dir / f"refs/{char_name}.png"
+        image_path = OUTPUT_DIR / f"refs/{char_name}.png"
         image_path.parent.mkdir(exist_ok=True)
         image_path.write_bytes(image_data)
 
@@ -90,7 +95,7 @@ def generate_scene_videos(
         )
 
         # Save video
-        video_path = self.output_dir / f"scenes/scene_{scene_num:02d}.mp4"
+        video_path = OUTPUT_DIR / f"scenes/scene_{scene_num:02d}.mp4"
         video_path.parent.mkdir(exist_ok=True)
         video_path.write_bytes(video_data)
 
@@ -110,21 +115,21 @@ def generate_image(image_api_key, prompt: str) -> bytes:
     Returns:
         Image data as bytes
     """
-    # Example using OpenAI DALL-E 3
-    import openai
 
-    client = openai.OpenAI(api_key=image_api_key)
 
-    response = client.images.generate(
-        model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1
+
+    client = genai.Client(api_key = image_api_key)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-image", contents=[prompt]#, size="1024x1024", quality="standard", n=1
     )
 
-    # Download image
-    import urllib.request
+    for part in response.parts:
+        if part.text is not None:
+            print(part.text)
+        elif part.inline_data is not None:
+            image = part.as_image()
+            return image.image_bytes
 
-    image_url = response.data[0].url
-    with urllib.request.urlopen(image_url) as response:
-        return response.read()
 
 
 def generate_video_veo(
@@ -176,23 +181,42 @@ def generate_video_veo(
         ]
         veo_params["personGeneration"] = "allow_adult"
 
-    # Call VEO 3.1 API (example - adjust for actual API)
-    response = requests.post(
-        "https://api.veo.google.com/v1/generate",
-        headers={
-            "Authorization": f"Bearer {veo_api_key}",
-            "Content-Type": "application/json",
-        },
-        json=veo_params,
-        timeout=180,  # Video generation takes time
+    client = genai.Client(api_key=veo_api_key)
+    operation = client.models.generate_videos(
+        model="veo-3.1-generate-preview",
+        prompt=prompt,
     )
-    response.raise_for_status()
 
-    # Wait for video to be ready and download
-    result = response.json()
-    video_url = result["video_url"]
+    # Poll the operation status until the video is ready.
+    while not operation.done:
+        print("Waiting for video generation to complete...")
+        time.sleep(10)
+        operation = client.operations.get(operation)
 
-    import urllib.request
+    # Download the generated video.
+    generated_video = operation.response.generated_videos[0]
+    client.files.download(file=generated_video.video)
+    return generated_video.video.video_bytes
 
-    with urllib.request.urlopen(video_url) as response:
-        return response.read()
+
+    
+    # Call VEO 3.1 API 
+    # response = requests.post(
+    #     "https://api.veo.google.com/v1/generate",
+    #     headers={
+    #         "Authorization": f"Bearer {veo_api_key}",
+    #         "Content-Type": "application/json",
+    #     },
+    #     json=veo_params,
+    #     timeout=180,  # Video generation takes time
+    # )
+    # response.raise_for_status()
+
+    # # Wait for video to be ready and download
+    # result = response.json()
+    # video_url = result["video_url"]
+
+    # import urllib.request
+
+    # with urllib.request.urlopen(video_url) as response:
+    #     return response.read()
