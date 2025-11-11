@@ -38,11 +38,10 @@ Create `secret.json` in the project root with your key:
 ```
 
 ## Usage
-There are two ways to run: full generation pipeline or stitching existing scenes.
+Right now the test only uses 8 seconds scenes(breakdown_8_sec.json), because VEO 3.1 only deals with 8-second scene prompts
 
-### A) Full pipeline (refs → scenes → trailer)
-1. loads `secret.json`
-2. Run:
+###  Full pipeline (refs → scenes → trailer)
+Run:
 
 ```
 python3 test.py
@@ -50,8 +49,8 @@ python3 test.py
 
 This will populate `output/refs/`, `output/scenes/`, and finally stitch into `output/trailer_no_audio.mp4`.
 
-### B) Only stitch 8 seconds scenes for now
-VEO 3.1 only deals with 8-second scene prompts
+
+
 
 
 
@@ -79,9 +78,7 @@ Notes and constraints enforced by code:
 - Per‑scene MP4s: `output/scenes/scene_01.mp4`, `scene_02.mp4`, ...
 - Stitched trailer (no audio): `output/trailer_no_audio.mp4`
 
-## Troubleshooting
-- ImportError for `stitch_videos`:
-  - Ensure you are importing from `generate.py` and the function exists (it does in this repo).
+## Common Errors
 - `FileNotFoundError: 'ffmpeg'` when stitching:
   - Install ffmpeg and ensure it’s on PATH. For macOS: `brew install ffmpeg`. Verify with `ffmpeg -version`.
 - ffmpeg concat fails with codec errors:
@@ -104,15 +101,12 @@ ffmpeg -y -f concat -safe 0 -i output/concat.txt \
 ├── test.py
 ├── trailer_breakdown_samples/
 │   └── breakdown_8_sec.json
+│   └── trailer_breakdown.json
 ├── output/
-│   ├── refs/
-│   │   └── <character>.png
-│   ├── scenes/
-│   │   └── scene_XX.mp4
+│   ├── refs
+│   ├── scenes
 │   └── trailer_no_audio.mp4
-├── requirements.txt
-├── secret.json
-├── README.md
-├── LICENSE
-└── .gitignore
+└── requirements.txt
 ```
+## More to modify
+Adjust the code in `generate.py` — specifically the `generate_scene_videos` and `stitch_videos` functions — to use virtual (temporary) paths and upload the final trailer to your GCS bucket.
