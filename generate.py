@@ -197,27 +197,7 @@ def generate_video_veo(
     return generated_video.video.video_bytes
 
 
-    
-    # Call VEO 3.1 API 
-    # response = requests.post(
-    #     "https://api.veo.google.com/v1/generate",
-    #     headers={
-    #         "Authorization": f"Bearer {veo_api_key}",
-    #         "Content-Type": "application/json",
-    #     },
-    #     json=veo_params,
-    #     timeout=180,  # Video generation takes time
-    # )
-    # response.raise_for_status()
 
-    # # Wait for video to be ready and download
-    # result = response.json()
-    # video_url = result["video_url"]
-
-    # import urllib.request
-
-    # with urllib.request.urlopen(video_url) as response:
-    #     return response.read()
     
 def stitch_videos(video_paths: List[Path]) -> Path:
         """
