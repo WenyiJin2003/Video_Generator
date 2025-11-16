@@ -199,6 +199,11 @@ cython_debug/
 #  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
+
+# Generated media
+/output/**/*.mp4
+/output/**/*.png
+.cursorignore
 .cursorindexingignore
 
 # Marimo
@@ -209,3 +214,4 @@ sample_videos/
 /secret.json
 **/.DS_Store
 /API_call_test.json
+
